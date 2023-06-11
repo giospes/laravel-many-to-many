@@ -24,6 +24,17 @@
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
+            <div class="mb-3">
+                <label for="technology_id">technology</label>
+                @foreach ($technologies as $technology)
+                    <input type="checkbox" id="technologies" name="technologies[]" value="{{ $technology->id }}">
+                    <label for="technologies">{{ $technology->name }}</label><br>
+                @endforeach
+                
+                @error('type_id')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
             <div class="form-group">
                 <label for="description">Description</label>
                 <textarea name="description" id="description" class="form-control @error('description') is-invalid @enderror" required></textarea>

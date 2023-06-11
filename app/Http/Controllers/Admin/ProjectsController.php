@@ -12,6 +12,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Models\User;
+use App\Models\Technology;
+
 
 class ProjectsController extends Controller
 {
@@ -39,7 +41,8 @@ class ProjectsController extends Controller
     public function create()
     {
         $types = Type::all();
-        return view('admin.projects.create', compact('types'));
+        $technologies = Technology::all();
+        return view('admin.projects.create', compact('types', 'technologies'));
     }
 
     /**
@@ -59,7 +62,14 @@ class ProjectsController extends Controller
         $project->description = $request->description;
         $project->user_id = $userId;
         $project->type_id = $request->type_id;
+        $selectedTechnologies = $request->input('technologies');
         $project->save();
+        foreach ($selectedTechnologies as $technologyId) {
+            $technology = Technology::find($technologyId);
+            $project->technologies()->attach($technology);
+        }
+    
+        
         return redirect()->route('admin.projects.show', $project->slug);
     }
 
@@ -71,6 +81,7 @@ class ProjectsController extends Controller
      */
     public function show($slug)
     {
+        $project = Project::where('slug', $slug)->with('technologies')->firstOrFail();
         $project = Project::where('slug', $slug)->firstOrFail(); 
         if (!Auth::user()->is_admin && $project->user_id !== Auth::id()) {
             abort(403);
@@ -91,7 +102,8 @@ class ProjectsController extends Controller
             abort(403);
         }
         $types = Type::all();
-        return view('admin.projects.edit', compact('project', 'types'));
+        $technologies = Technology::all();
+        return view('admin.projects.edit', compact('project', 'types','technologies'));
     }
 
     /**
@@ -108,7 +120,16 @@ class ProjectsController extends Controller
         $slug = Str::slug($request->name, '-');
         $data['slug'] = $slug;
         $project->update($data);
-
+        $selectedTechnologies = $request->input('technologies');
+        if (empty($selectedTechnologies)) {
+            $project->technologies()->detach();
+        } else {
+            // Remove unselected technologies
+            $unselectedTechnologies = Technology::whereNotIn('id', $selectedTechnologies)->get();
+            $project->technologies()->detach($unselectedTechnologies);
+            $technologies = Technology::whereIn('id', $selectedTechnologies)->get();
+            $project->technologies()->sync($technologies);
+        }
         return redirect()->route('admin.projects.index')->with('success', 'Project updated correctly');
     }
 

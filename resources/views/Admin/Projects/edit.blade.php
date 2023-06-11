@@ -33,6 +33,14 @@
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
+            <div>
+                <label for="technologies">Technologies:</label><br>
+                @foreach ($technologies as $technology)
+                    <input type="checkbox" id="technologies" name="technologies[]" value="{{ $technology->id }}"
+                        @if ($project->technologies->contains($technology->id)) checked @endif>
+                    <label for="technologies">{{ $technology->name }}</label><br>
+                @endforeach
+            </div>
             <div class="form-group">
                 <button type="submit" class="btn btn-primary">Update</button>
             </div>
